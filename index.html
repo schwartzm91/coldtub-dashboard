@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>MindFuel Cold Plunge Monitor</title>
+
+<!-- PWA / add-to-home-screen -->
+<meta name="theme-color" content="#013D5B" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<meta name="apple-mobile-web-app-title" content="Fuel Tank" />
+<link rel="manifest" href="manifest.json" />
+<link rel="apple-touch-icon" href="icon-192.png" />
+
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
+
+<style>
+  :root{
+    --blue:#013D5B; --cream:#FFF5E6; --orange:#F4A258;
+    --green:#708D69; --lightblue:#BDD4CD; --red:#C0392B;
+    --ink:#0c2a3a; --muted:#5b7180;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  html,body{margin:0;padding:0;}
+  body{
+    font-family:'Inter',system-ui,sans-serif;
+    background:radial-gradient(1200px 600px at 50% -10%, #064b6e 0%, var(--blue) 55%) fixed;
+    color:var(--cream);
+    min-height:100vh;
+    padding:env(safe-area-inset-top) 16px calc(28px + env(safe-area-inset-bottom));
+  }
+  .wrap{max-width:560px;margin:0 auto;}
+
+  header{display:flex;align-items:center;gap:12px;padding:22px 2px 14px;}
+  .logo{flex:0 0 auto;}
+  .titles h1{font-family:'Montserrat';font-weight:800;font-size:19px;letter-spacing:.2px;margin:0;line-height:1.05;}
+  .titles p{margin:2px 0 0;font-size:12.5px;color:var(--lightblue);font-weight:500;}
+
+  .bar{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:2px 2px 16px;}
+  .updated{font-size:12px;color:var(--lightblue);}
+  .updated b{color:var(--cream);font-weight:600;}
+  button.refresh{
+    font-family:'Inter';font-weight:600;font-size:13px;color:var(--blue);
+    background:var(--orange);border:0;border-radius:999px;padding:9px 16px;cursor:pointer;
+    display:inline-flex;align-items:center;gap:7px;box-shadow:0 4px 14px rgba(0,0,0,.22);
+  }
+  button.refresh:active{transform:translateY(1px);}
+  button.refresh svg{display:block;}
+  .spin{animation:spin .8s linear infinite;}
+  @keyframes spin{to{transform:rotate(360deg);}}
+
+  .cards{display:grid;grid-template-columns:1fr;gap:14px;}
+  @media(min-width:480px){.cards{grid-template-columns:1fr 1fr;}}
+
+  .card{
+    background:var(--cream);color:var(--ink);border-radius:18px;padding:16px 16px 14px;
+    box-shadow:0 8px 24px rgba(0,0,0,.20);position:relative;overflow:hidden;
+    border-top:5px solid var(--green);
+  }
+  .card.good{border-top-color:var(--green);}
+  .card.watch{border-top-color:var(--orange);}
+  .card.alert{border-top-color:var(--red);}
+
+  .card .top{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;}
+  .card .name{font-family:'Montserrat';font-weight:700;font-size:15.5px;color:var(--blue);}
+  .pill{font-size:10.5px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;
+    padding:4px 9px;border-radius:999px;color:#fff;}
+  .pill.good{background:var(--green);}
+  .pill.watch{background:var(--orange);color:#5a3410;}
+  .pill.alert{background:var(--red);}
+
+  .metrics{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+  .metric{background:#fff;border-radius:12px;padding:10px 11px;border:1px solid #eadfca;}
+  .metric .label{font-size:10.5px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;}
+  .metric .val{font-family:'Montserrat';font-weight:800;font-size:22px;line-height:1.1;margin-top:3px;color:var(--blue);}
+  .metric .val small{font-size:11px;font-weight:600;color:var(--muted);margin-left:3px;}
+  .metric.flag-watch .val{color:#b56a16;}
+  .metric.flag-alert .val{color:var(--red);}
+
+  .card .foot{margin-top:11px;font-size:11px;color:var(--muted);display:flex;justify-content:space-between;}
+
+  .status-msg{margin:0 2px 14px;padding:12px 14px;border-radius:12px;font-size:13px;font-weight:600;display:none;}
+  .status-msg.alert{display:block;background:rgba(192,57,43,.16);border:1px solid rgba(192,57,43,.5);color:#ffd9d3;}
+  .status-msg.good{display:block;background:rgba(112,141,105,.18);border:1px solid rgba(112,141,105,.5);color:#dff0d8;}
+
+  footer{margin:22px 4px 0;font-size:11px;color:var(--lightblue);text-align:center;line-height:1.5;opacity:.85;}
+  .err{display:none;margin:8px 2px;padding:12px 14px;border-radius:12px;background:rgba(192,57,43,.16);
+    border:1px solid rgba(192,57,43,.5);color:#ffd9d3;font-size:12.5px;}
+  .skeleton{height:150px;border-radius:18px;background:linear-gradient(100deg,#0a4763 30%,#0e5478 50%,#0a4763 70%);
+    background-size:200% 100%;animation:sk 1.2s ease-in-out infinite;}
+  @keyframes sk{to{background-position:-200% 0;}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <span class="logo" aria-hidden="true">
+      <svg width="42" height="42" viewBox="0 0 64 64" fill="none">
+        <rect width="64" height="64" rx="14" fill="#013D5B" stroke="#BDD4CD" stroke-width="1.5"/>
+        <path d="M14 46 L27 22 L34 35 L40 27 L50 46 Z" fill="#FFF5E6"/>
+        <path d="M27 22 L34 35 L30.5 41 L21 41 Z" fill="#F4A258"/>
+      </svg>
+    </span>
+    <div class="titles">
+      <h1>Cold Plunge Monitor</h1>
+      <p>MindFuel &middot; the Fuel Tank</p>
+    </div>
+  </header>
+
+  <div class="bar">
+    <div class="updated" id="updated">Loading readings&hellip;</div>
+    <button class="refresh" id="refreshBtn" onclick="load(true)">
+      <svg id="refreshIcon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#013D5B" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-2.64-6.36"/><path d="M21 3v6h-6"/></svg>
+      Refresh
+    </button>
+  </div>
+
+  <div class="status-msg" id="statusMsg"></div>
+  <div class="err" id="err"></div>
+
+  <div class="cards" id="cards">
+    <div class="skeleton"></div><div class="skeleton"></div>
+    <div class="skeleton"></div><div class="skeleton"></div>
+  </div>
+
+  <footer>
+    Estimated free chlorine derived from ORP via MindFuel conversion table.<br/>
+    Auto-refreshes every 5 min &middot; data logged hourly from the Coldtub portal.
+  </footer>
+</div>
+
+<script>
+/* ====== CONFIG ======
+   CSV_URL pulls the live Google Sheet. This default uses the gviz endpoint and
+   works once the sheet is shared "Anyone with the link -> Viewer".
+   If you instead use File > Share > Publish to web (CSV), paste that URL here. */
+const CONFIG = {
+  CSV_URL: "https://docs.google.com/spreadsheets/d/1x1DKpO3hAr86atE6kqFURU5m6fLDlqmj67g8AXZ1qt8/gviz/tq?tqx=out:csv",
+  REFRESH_MS: 5 * 60 * 1000,
+  TUB_ORDER: ["Tub #1 (Far Left)","Tub #2 (Middle Left)","Tub #3 (Middle Right)","Tub #4 (Far Right)"]
+};
+
+/* thresholds */
+function orpFlag(v){ if(v<650||v>800) return "alert"; if(v<700||v>780) return "watch"; return "good"; }
+function ppmFlag(v){ if(v<1.0||v>5.0) return "alert"; if(v<2.0||v>4.0) return "watch"; return "good"; }
+function phFlag(v){ if(v<7.2||v>8.0) return "alert"; if(v<7.4||v>7.6) return "watch"; return "good"; }
+const RANK={good:0,watch:1,alert:2};
+function worst(...f){ return f.reduce((a,b)=> RANK[b]>RANK[a]?b:a, "good"); }
+
+/* minimal CSV parser (handles quoted fields) */
+function parseCSV(text){
+  const rows=[]; let row=[], cur="", q=false;
+  for(let i=0;i<text.length;i++){
+    const c=text[i];
+    if(q){
+      if(c==='"'){ if(text[i+1]==='"'){cur+='"';i++;} else q=false; }
+      else cur+=c;
+    } else {
+      if(c==='"') q=true;
+      else if(c===',') {row.push(cur);cur="";}
+      else if(c==='\n'){row.push(cur);rows.push(row);row=[];cur="";}
+      else if(c==='\r'){}
+      else cur+=c;
+    }
+  }
+  if(cur.length||row.length){row.push(cur);rows.push(row);}
+  return rows.filter(r=>r.length>1 || (r.length===1&&r[0].trim()!==""));
+}
+
+function fmt(n,d){ return (n===null||isNaN(n))?"--":Number(n).toFixed(d); }
+
+async function load(manual){
+  const icon=document.getElementById("refreshIcon");
+  if(manual) icon.classList.add("spin");
+  const err=document.getElementById("err");
+  try{
+    const res=await fetch(CONFIG.CSV_URL + "&_=" + Date.now());
+    if(!res.ok) throw new Error("HTTP "+res.status);
+    const rows=parseCSV(await res.text());
+    const head=rows.shift().map(h=>h.trim());
+    const idx=name=>head.findIndex(h=>h.toLowerCase().startsWith(name));
+    const ci={date:idx("date"),time:idx("time"),tub:idx("tub"),temp:idx("temp"),
+              orp:idx("orp"),ph:idx("ph"),ppm:idx("chlorine")};
+
+    // latest row per tub
+    const latest={};
+    for(const r of rows){
+      const tub=(r[ci.tub]||"").trim(); if(!tub) continue;
+      const key=(r[ci.date]||"")+"T"+(r[ci.time]||"");
+      if(!latest[tub] || key>latest[tub]._key){
+        latest[tub]={_key:key,date:r[ci.date],time:r[ci.time],
+          temp:parseFloat(r[ci.temp]),orp:parseFloat(r[ci.orp]),
+          ph:parseFloat(r[ci.ph]),ppm:parseFloat(r[ci.ppm])};
+      }
+    }
+
+    const order=CONFIG.TUB_ORDER.filter(t=>latest[t]).concat(Object.keys(latest).filter(t=>!CONFIG.TUB_ORDER.includes(t)));
+    const cards=document.getElementById("cards"); cards.innerHTML="";
+    let alerts=[], newest="";
+    for(const tub of order){
+      const d=latest[tub];
+      if(d._key>newest) newest=d._key;
+      const of=orpFlag(d.orp), pf=ppmFlag(d.ppm), hf=phFlag(d.ph);
+      const cardFlag=worst(of,pf,hf);
+      if(cardFlag==="alert"){
+        let why=[]; if(of==="alert")why.push("ORP "+d.orp); if(pf==="alert")why.push("Cl "+fmt(d.ppm,1)+"ppm");
+        alerts.push(tub.replace(/\s*\(.*\)/,"")+" ("+why.join(", ")+")");
+      }
+      const el=document.createElement("div");
+      el.className="card "+cardFlag;
+      el.innerHTML=`
+        <div class="top">
+          <span class="name">${tub}</span>
+          <span class="pill ${cardFlag}">${cardFlag==="good"?"In range":cardFlag==="watch"?"Watch":"Alert"}</span>
+        </div>
+        <div class="metrics">
+          <div class="metric flag-${of}"><div class="label">ORP</div><div class="val">${fmt(d.orp,0)}<small>mV</small></div></div>
+          <div class="metric flag-${pf}"><div class="label">Free Cl</div><div class="val">${fmt(d.ppm,1)}<small>ppm</small></div></div>
+          <div class="metric flag-${hf}"><div class="label">pH</div><div class="val">${fmt(d.ph,1)}</div></div>
+          <div class="metric"><div class="label">Temp</div><div class="val">${fmt(d.temp,0)}<small>&deg;F</small></div></div>
+        </div>
+        <div class="foot"><span>Logged ${d.time||""}</span><span>${d.date||""}</span></div>`;
+      cards.appendChild(el);
+    }
+
+    const sm=document.getElementById("statusMsg");
+    if(alerts.length){ sm.className="status-msg alert"; sm.textContent="⚠ "+alerts.length+" tub"+(alerts.length>1?"s":"")+" need attention: "+alerts.join("  •  "); }
+    else { sm.className="status-msg good"; sm.textContent="✓ All tubs within healthy range."; }
+
+    const t=new Date();
+    document.getElementById("updated").innerHTML="Updated <b>"+t.toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'})+"</b> &middot; latest log "+(newest.split("T")[1]||"");
+    err.style.display="none";
+  }catch(e){
+    err.style.display="block";
+    err.innerHTML="Couldn’t load readings. Make sure the Google Sheet is shared as “Anyone with the link → Viewer.” <br><small>"+e.message+"</small>";
+    document.getElementById("updated").textContent="Update failed";
+  }finally{
+    setTimeout(()=>icon.classList.remove("spin"),600);
+  }
+}
+
+load(false);
+setInterval(()=>load(false), CONFIG.REFRESH_MS);
+document.addEventListener("visibilitychange",()=>{ if(!document.hidden) load(false); });
+</script>
+</body>
+</html>

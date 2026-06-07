@@ -1,0 +1,15 @@
+{
+  "name": "MindFuel Cold Plunge Monitor",
+  "short_name": "Fuel Tank",
+  "description": "Live ORP, pH, and chlorine readings for MindFuel's cold plunge tubs.",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#013D5B",
+  "theme_color": "#013D5B",
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ]
+}

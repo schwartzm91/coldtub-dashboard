@@ -145,9 +145,9 @@ const CONFIG = {
 };
 
 /* thresholds */
-function orpFlag(v){ if(v<650||v>800) return "alert"; if(v<700||v>780) return "watch"; return "good"; }
-function ppmFlag(v){ if(v<1.0||v>5.0) return "alert"; if(v<2.0||v>4.0) return "watch"; return "good"; }
-function phFlag(v){ if(v<7.2||v>8.0) return "alert"; if(v<7.4||v>7.6) return "watch"; return "good"; }
+function orpFlag(v){ return (v<650||v>800) ? "alert" : "good"; }
+function ppmFlag(v){ return (v<1.0||v>5.0) ? "alert" : "good"; }
+function phFlag(v){ return (v<7.2||v>8.0) ? "alert" : "good"; }
 const RANK={good:0,watch:1,alert:2};
 function worst(...f){ return f.reduce((a,b)=> RANK[b]>RANK[a]?b:a, "good"); }
 
